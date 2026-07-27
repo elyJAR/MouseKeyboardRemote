@@ -10,10 +10,15 @@ import android.os.IBinder
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.antigravity.mousekeyboard.receiver.R
 import com.antigravity.mousekeyboard.receiver.RemoteAccessibilityService
 import com.antigravity.mousekeyboard.receiver.network.ReceiverServerService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvPinCode: TextView
     private lateinit var btnAccessibility: Button
     private lateinit var btnOverlay: Button
+    private lateinit var btnAutoGrantRoot: Button
 
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
@@ -61,24 +67,95 @@ class MainActivity : AppCompatActivity() {
         tvPinCode = findViewById(R.id.tvPinCode)
         btnAccessibility = findViewById(R.id.btnAccessibility)
         btnOverlay = findViewById(R.id.btnOverlay)
+        btnAutoGrantRoot = findViewById(R.id.btnAutoGrantRoot)
 
         btnAccessibility.setOnClickListener {
-            val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-            startActivity(intent)
+            try {
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Fallback to general settings if leanback TV settings crashes
+                openGeneralSettings()
+            }
         }
 
         btnOverlay.setOnClickListener {
-            val intent = Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:$packageName")
-            )
-            startActivity(intent)
+            try {
+                val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Fallback to application details settings
+                try {
+                    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (ex: Exception) {
+                    openGeneralSettings()
+                }
+            }
+        }
+
+        btnAutoGrantRoot.setOnClickListener {
+            attemptRootAutoGrant()
         }
 
         // Start & Bind Service
         val serviceIntent = Intent(this, ReceiverServerService::class.java)
         startService(serviceIntent)
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    private fun openGeneralSettings() {
+        try {
+            val intent = Intent(Settings.ACTION_SETTINGS)
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Use ADB commands below to grant permissions on this TV", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun attemptRootAutoGrant() {
+        Toast.makeText(this, "Attempting Root Auto-Grant...", Toast.LENGTH_SHORT).show()
+        CoroutineScope(Dispatchers.IO).launch {
+            var success = false
+            try {
+                val p = Runtime.getRuntime().exec("su")
+                val os = p.outputStream
+                val cmd1 = "pm grant $packageName android.permission.SYSTEM_ALERT_WINDOW\n"
+                val cmd2 = "appops set $packageName SYSTEM_ALERT_WINDOW allow\n"
+                val cmd3 = "settings put secure enabled_accessibility_services $packageName/.RemoteAccessibilityService\n"
+                val cmd4 = "settings put secure accessibility_enabled 1\n"
+                val cmd5 = "exit\n"
+
+                os.write(cmd1.toByteArray())
+                os.write(cmd2.toByteArray())
+                os.write(cmd3.toByteArray())
+                os.write(cmd4.toByteArray())
+                os.write(cmd5.toByteArray())
+                os.flush()
+                p.waitFor()
+                success = (p.exitValue() == 0)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            withContext(Dispatchers.Main) {
+                if (success) {
+                    Toast.makeText(this@MainActivity, "Root permissions granted successfully!", Toast.LENGTH_LONG).show()
+                    updateUi()
+                } else {
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Root not detected. Please run the ADB shell commands shown below.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
 
     override fun onResume() {

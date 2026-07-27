@@ -1,116 +1,174 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/tv_bg_dark"
-    android:orientation="vertical"
-    android:padding="48dp">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="@color/white"
-        android:textSize="32sp"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/status_disconnected"
-        android:textColor="@color/tv_accent"
-        android:textSize="18sp" />
+    android:background="@color/tv_bg_dark">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:orientation="horizontal">
+        android:orientation="vertical"
+        android:padding="36dp">
 
-        <!-- IP Card -->
-        <LinearLayout
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_weight="1"
-            android:background="@color/tv_card_bg"
-            android:orientation="vertical"
-            android:padding="24dp">
+            android:text="@string/app_name"
+            android:textColor="@color/white"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/ip_address_label"
-                android:textColor="#9E9E9E"
-                android:textSize="14sp" />
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/status_disconnected"
+            android:textColor="@color/tv_accent"
+            android:textSize="16sp" />
 
-            <TextView
-                android:id="@+id/tvIpAddress"
-                android:layout_width="wrap_content"
+        <!-- Cards Container -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="horizontal">
+
+            <!-- IP Card -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Detecting..."
+                android:layout_marginEnd="12dp"
+                android:layout_weight="1"
+                android:background="@color/tv_card_bg"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/ip_address_label"
+                    android:textColor="#9E9E9E"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvIpAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Detecting..."
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- PIN Card -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:background="@color/tv_card_bg"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/pin_code_label"
+                    android:textColor="#9E9E9E"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvPinCode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="----"
+                    android:textColor="@color/tv_accent"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Permission Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/tv_card_bg"
+                android:padding="14dp"
+                android:text="@string/grant_accessibility"
                 android:textColor="@color/white"
-                android:textSize="24sp"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/tv_card_bg"
+                android:padding="14dp"
+                android:text="@string/grant_overlay"
+                android:textColor="@color/white"
+                android:textSize="15sp" />
+
+            <Button
+                android:id="@+id/btnAutoGrantRoot"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:backgroundTint="@color/tv_accent"
+                android:padding="14dp"
+                android:text="⚡ Auto-Grant Permissions (Root Workaround)"
+                android:textColor="@color/black"
+                android:textSize="15sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- PIN Card -->
+        <!-- ADB Workaround Instructions Card -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_weight="1"
+            android:layout_marginTop="24dp"
             android:background="@color/tv_card_bg"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:padding="20dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pin_code_label"
-                android:textColor="#9E9E9E"
-                android:textSize="14sp" />
+                android:text="🛠️ Old Android TV ADB Bypass Workaround"
+                android:textColor="@color/tv_accent"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/tvPinCode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="----"
-                android:textColor="@color/tv_accent"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:text="If TV settings won't open, run these commands via ADB to grant permissions instantly:"
+                android:textColor="#B0BEC5"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvAdbCommands"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="#0A0D10"
+                android:fontFamily="monospace"
+                android:padding="12dp"
+                android:text="adb shell pm grant com.antigravity.mousekeyboard.receiver android.permission.SYSTEM_ALERT_WINDOW\n\nadb shell settings put secure enabled_accessibility_services com.antigravity.mousekeyboard.receiver/.RemoteAccessibilityService\n\nadb shell settings put secure accessibility_enabled 1"
+                android:textColor="#00E676"
+                android:textSize="12sp" />
         </LinearLayout>
+
     </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:orientation="vertical">
-
-        <Button
-            android:id="@+id/btnAccessibility"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/tv_card_bg"
-            android:padding="16dp"
-            android:text="@string/grant_accessibility"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
-
-        <Button
-            android:id="@+id/btnOverlay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:backgroundTint="@color/tv_card_bg"
-            android:padding="16dp"
-            android:text="@string/grant_overlay"
-            android:textColor="@color/white"
-            android:textSize="16sp" />
-    </LinearLayout>
-</LinearLayout>
+</ScrollView>

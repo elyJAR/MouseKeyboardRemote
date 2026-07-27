@@ -1,63 +1,53 @@
-# Dual-APK Android Mouse & Keyboard Remote Build & Installation Guide
+# Dual-APK Android Mouse & Keyboard Remote System Guide
 
 ## 1. Project Structure Overview
 * **`:shared_protocol`**: Shared Kotlin library containing data packets and binary/JSON encoders.
 * **`:receiver_app`**: Android TV application (Android 9+ / minSdk 28) running the overlay cursor and accessibility gesture server.
-* **`:controller_app`**: Handheld mobile application (minSdk 24) running the multi-touch trackpad, D-pad, and soft keyboard relay.
+* **`:controller_app`**: Handheld mobile application (minSdk 24) running the multi-touch trackpad, D-Pad, and soft keyboard relay.
 
 ---
 
 ## 2. Building the APKs
 
-### Prerequisites
-* **Android Studio**: Jellyfish (2023.3.1) or newer recommended.
-* **Android SDK**: API level 34 (Android 14) compile SDK installed.
-* **JDK**: Version 17 or higher.
-
 ### Command Line Build
 Open a terminal in the project directory `Mouse_keyboard/`:
 
-#### Build Receiver APK (Android TV Target)
 ```powershell
-./gradlew :receiver_app:assembleDebug
-```
-Output location:
-`receiver_app/build/outputs/apk/debug/receiver_app-debug.apk`
-
-#### Build Controller APK (Phone / Mobile Target)
-```powershell
-./gradlew :controller_app:assembleDebug
-```
-Output location:
-`controller_app/build/outputs/apk/debug/controller_app-debug.apk`
-
-#### Build Both APKs Simultaneously
-```powershell
+# Build both APKs
 ./gradlew assembleDebug
 ```
+Output locations:
+- `receiver_app/build/outputs/apk/debug/receiver_app-debug.apk`
+- `controller_app/build/outputs/apk/debug/controller_app-debug.apk`
 
 ---
 
-## 3. Installation & First-Time Onboarding
+## 3. Workarounds for Older / Custom Android TV Devices
 
-### A. Installing Receiver APK on Android TV
-1. Install `receiver_app-debug.apk` onto your Android TV box or Android 9 TV device (via ADB over Wi-Fi or USB drive):
-   ```powershell
-   adb connect <TV_IP_ADDRESS>:5555
-   adb install -r receiver_app/build/outputs/apk/debug/receiver_app-debug.apk
-   ```
-2. Launch **TV Remote Receiver** on Android TV.
-3. **Grant Required Permissions**:
-   * Click **Enable Accessibility Service** -> Turn ON **TV Remote Receiver** under Accessibility.
-   * Click **Enable Display Over Other Apps** -> Allow permission for **TV Remote Receiver**.
-4. Note down the **Local IP Address** and 4-digit **Pairing PIN Code** displayed on the TV dashboard.
+On older Android TV boxes (Android 7 / 8 / 9 or customized TV boxes like Rockchip/Amlogic/Allwinner), standard Android settings screens for **Accessibility** and **Display Over Other Apps (`SYSTEM_ALERT_WINDOW`)** may be missing or hidden.
 
-### B. Installing Controller APK on Mobile Phone
-1. Install `controller_app-debug.apk` on your handheld Android phone:
-   ```powershell
-   adb install -r controller_app/build/outputs/apk/debug/controller_app-debug.apk
-   ```
-2. Ensure phone and Android TV are connected to the same local Wi-Fi network.
-3. Open **Android Remote Controller** on your phone.
-4. Tap **Connect to TV**. The app will auto-discover the TV via mDNS.
-5. Enter the 4-digit PIN displayed on your TV screen to pair and start controlling the TV cursor, keyboard, and D-pad!
+We provide **3 Built-in Workarounds**:
+
+### Workaround 1: Auto-Grant via Root (1-Click on TV)
+If your TV box is rooted (common on TV boxes):
+1. Open the Receiver App on your TV.
+2. Click **⚡ Auto-Grant Permissions (Root Workaround)**.
+3. The app executes `su` root shell commands to grant both Accessibility and Overlay permissions automatically.
+
+### Workaround 2: Instant ADB Bypass Commands (From PC or Mobile)
+Connect to your TV via ADB over Wi-Fi (`adb connect <TV_IP_ADDRESS>:5555`) and run these commands once:
+
+```bash
+# 1. Grant Overlay Permission (Floating Pointer)
+adb shell pm grant com.antigravity.mousekeyboard.receiver android.permission.SYSTEM_ALERT_WINDOW
+adb shell appops set com.antigravity.mousekeyboard.receiver SYSTEM_ALERT_WINDOW allow
+
+# 2. Enable Accessibility Service (Gesture & Input Injection)
+adb shell settings put secure enabled_accessibility_services com.antigravity.mousekeyboard.receiver/.RemoteAccessibilityService
+adb shell settings put secure accessibility_enabled 1
+```
+
+### Workaround 3: Fallback D-Pad & Keyboard Remote Mode (No Overlay Required)
+If `SYSTEM_ALERT_WINDOW` (Display over other apps) cannot be granted at all on your TV model:
+- You do **NOT** need the mouse pointer overlay to control your TV!
+- The Controller app's **D-Pad Mode** (Up, Down, Left, Right, OK, Back, Home, Recents, Volume) and **Keyboard Relay Mode** work out of the box without requiring overlay permissions!
