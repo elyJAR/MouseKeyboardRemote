@@ -82,7 +82,7 @@ class ControllerClientManager {
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace Bea
+            e.printStackTrace()
         } finally {
             disconnect()
         }
