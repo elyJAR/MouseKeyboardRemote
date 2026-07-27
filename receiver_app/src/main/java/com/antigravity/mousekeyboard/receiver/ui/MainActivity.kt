@@ -5,8 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.os.PowerManager
 import android.provider.Settings
 import android.widget.Button
 import android.widget.TextView
@@ -30,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvPinCode: TextView
     private lateinit var btnAccessibility: Button
     private lateinit var btnOverlay: Button
+    private lateinit var btnBatteryOptimize: Button
     private lateinit var btnAutoGrantRoot: Button
 
     private val serviceConnection = object : ServiceConnection {
@@ -67,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         tvPinCode = findViewById(R.id.tvPinCode)
         btnAccessibility = findViewById(R.id.btnAccessibility)
         btnOverlay = findViewById(R.id.btnOverlay)
+        btnBatteryOptimize = findViewById(R.id.btnBatteryOptimize)
         btnAutoGrantRoot = findViewById(R.id.btnAutoGrantRoot)
 
         btnAccessibility.setOnClickListener {
@@ -74,7 +78,6 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
                 startActivity(intent)
             } catch (e: Exception) {
-                // Fallback to general settings if leanback TV settings crashes
                 openGeneralSettings()
             }
         }
@@ -87,7 +90,6 @@ class MainActivity : AppCompatActivity() {
                 )
                 startActivity(intent)
             } catch (e: Exception) {
-                // Fallback to application details settings
                 try {
                     val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                         data = Uri.parse("package:$packageName")
@@ -97,6 +99,10 @@ class MainActivity : AppCompatActivity() {
                     openGeneralSettings()
                 }
             }
+        }
+
+        btnBatteryOptimize.setOnClickListener {
+            requestIgnoreBatteryOptimization()
         }
 
         btnAutoGrantRoot.setOnClickListener {
@@ -109,6 +115,24 @@ class MainActivity : AppCompatActivity() {
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
     }
 
+    private fun requestIgnoreBatteryOptimization() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    openGeneralSettings()
+                }
+            } else {
+                Toast.makeText(this, "Battery optimization already disabled!", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     private fun openGeneralSettings() {
         try {
             val intent = Intent(Settings.ACTION_SETTINGS)
@@ -119,7 +143,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun attemptRootAutoGrant() {
-        Toast.makeText(this, "Attempting Root Auto-Grant...", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Attempting Root Auto-Grant & Auto-Start setup...", Toast.LENGTH_SHORT).show()
         CoroutineScope(Dispatchers.IO).launch {
             var success = false
             try {
@@ -129,13 +153,15 @@ class MainActivity : AppCompatActivity() {
                 val cmd2 = "appops set $packageName SYSTEM_ALERT_WINDOW allow\n"
                 val cmd3 = "settings put secure enabled_accessibility_services $packageName/.RemoteAccessibilityService\n"
                 val cmd4 = "settings put secure accessibility_enabled 1\n"
-                val cmd5 = "exit\n"
+                val cmd5 = "dumpsys deviceidle whitelist +$packageName\n"
+                val cmd6 = "exit\n"
 
                 os.write(cmd1.toByteArray())
                 os.write(cmd2.toByteArray())
                 os.write(cmd3.toByteArray())
                 os.write(cmd4.toByteArray())
                 os.write(cmd5.toByteArray())
+                os.write(cmd6.toByteArray())
                 os.flush()
                 p.waitFor()
                 success = (p.exitValue() == 0)
@@ -145,12 +171,12 @@ class MainActivity : AppCompatActivity() {
 
             withContext(Dispatchers.Main) {
                 if (success) {
-                    Toast.makeText(this@MainActivity, "Root permissions granted successfully!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@MainActivity, "Root permissions & Auto-start configured!", Toast.LENGTH_LONG).show()
                     updateUi()
                 } else {
                     Toast.makeText(
                         this@MainActivity,
-                        "Root not detected. Please run the ADB shell commands shown below.",
+                        "Root not detected. Run the ADB shell commands shown below.",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -185,6 +211,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             btnOverlay.text = getString(R.string.grant_overlay)
             btnOverlay.isEnabled = true
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (pm.isIgnoringBatteryOptimizations(packageName)) {
+                btnBatteryOptimize.text = "✓ Battery Optimization Disabled"
+                btnBatteryOptimize.isEnabled = false
+            }
         }
     }
 
