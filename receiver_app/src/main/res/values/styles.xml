@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.ReceiverApp" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/tv_bg_dark</item>
+        <item name="colorPrimary">@color/tv_accent</item>
+        <item name="colorAccent">@color/tv_accent</item>
+    </style>
+</resources>

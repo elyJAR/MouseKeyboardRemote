@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Android Remote Controller</string>
+    <string name="tab_trackpad">Trackpad</string>
+    <string name="tab_dpad">D-Pad Remote</string>
+    <string name="tab_keyboard">Keyboard</string>
+    <string name="connect_button">Connect to TV</string>
+    <string name="disconnect_button">Disconnect</string>
+    <string name="status_searching">Searching for TV on Wi-Fi...</string>
+    <string name="status_connected">Connected to Android TV</string>
+    <string name="status_disconnected">Not Connected</string>
+    <string name="enter_pin_title">Enter Pairing PIN</string>
+    <string name="enter_pin_hint">Enter 4-digit PIN on TV screen</string>
+    <string name="send_text">Send to TV</string>
+    <string name="type_text_hint">Type message or search query...</string>
+</resources>

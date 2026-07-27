@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TV Remote Receiver</string>
+    <string name="accessibility_service_description">Allows remote control devices to move the pointer, tap, scroll, and type text on Android TV.</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_disconnected">Waiting for Controller connection...</string>
+    <string name="grant_accessibility">Enable Accessibility Service</string>
+    <string name="grant_overlay">Enable Display Over Other Apps</string>
+    <string name="pin_code_label">Pairing PIN Code:</string>
+    <string name="ip_address_label">Local IP Address:</string>
+</resources>

@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.ControllerApp" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/remote_bg</item>
+        <item name="colorPrimary">@color/remote_accent</item>
+        <item name="colorAccent">@color/remote_accent</item>
+    </style>
+</resources>
