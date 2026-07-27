@@ -10,10 +10,15 @@ on:
         required: true
         default: 'v1.0.0-beta1'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build Android Remote APKs
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -54,7 +59,7 @@ jobs:
           path: release_apks/
 
       - name: Create GitHub Pre-Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         with:
           tag_name: ${{ github.event.inputs.release_tag || 'v1.0.0-beta' }}
