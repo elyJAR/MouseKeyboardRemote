@@ -16,6 +16,11 @@ import com.antigravity.mousekeyboard.controller.network.ControllerClientManager
 import com.antigravity.mousekeyboard.controller.network.NsdDiscoverer
 import com.antigravity.mousekeyboard.protocol.ClickAction
 import com.google.android.material.tabs.TabLayout
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,6 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvConnectionStatus: TextView
     private lateinit var btnConnect: Button
+    private lateinit var btnManualIp: Button
     private lateinit var tabLayout: TabLayout
 
     private lateinit var containerTrackpad: LinearLayout
@@ -60,6 +66,7 @@ class MainActivity : AppCompatActivity() {
     private fun initViews() {
         tvConnectionStatus = findViewById(R.id.tvConnectionStatus)
         btnConnect = findViewById(R.id.btnConnect)
+        btnManualIp = findViewById(R.id.btnManualIp)
         tabLayout = findViewById(R.id.tabLayout)
 
         containerTrackpad = findViewById(R.id.containerTrackpad)
@@ -90,6 +97,10 @@ class MainActivity : AppCompatActivity() {
                 tvConnectionStatus.text = getString(R.string.status_searching)
                 nsdDiscoverer.startDiscovery()
             }
+        }
+
+        btnManualIp.setOnClickListener {
+            showManualIpDialog()
         }
 
         tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
@@ -149,6 +160,36 @@ class MainActivity : AppCompatActivity() {
                 etInput.text.clear()
             }
         }
+    }
+
+    private fun showManualIpDialog() {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            hint = "e.g. 192.168.43.1 or 192.168.1.15"
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Manual / Hotspot IP Connection")
+            .setMessage("Enter the local IP address displayed on your Android TV screen:")
+            .setView(input)
+            .setPositiveButton("Connect") { _, _ ->
+                val ipStr = input.text.toString().trim()
+                if (ipStr.isNotEmpty()) {
+                    tvConnectionStatus.text = "Connecting to $ipStr..."
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val addr = InetAddress.getByName(ipStr)
+                            clientManager.connect(addr)
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "Invalid IP Address", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun setupNetworkCallbacks() {
