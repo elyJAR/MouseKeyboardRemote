@@ -205,44 +205,63 @@ class ReceiverServerService : Service() {
 
         when (packet) {
             is ClickPacket -> {
-                when (packet.action) {
-                    ClickAction.LEFT_CLICK -> {
-                        overlayManager.setClickState(true)
-                        service?.injectTap(cx, cy)
-                        overlayManager.setClickState(false)
+                if (service != null) {
+                    when (packet.action) {
+                        ClickAction.LEFT_CLICK -> {
+                            overlayManager.setClickState(true)
+                            service.injectTap(cx, cy)
+                            overlayManager.setClickState(false)
+                        }
+                        ClickAction.RIGHT_CLICK -> {
+                            service.performSystemAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                        }
+                        ClickAction.DOUBLE_CLICK -> {
+                            service.injectDoubleTap(cx, cy)
+                        }
+                        ClickAction.PRESS_HOLD -> {
+                            overlayManager.setClickState(true)
+                        }
+                        ClickAction.RELEASE -> {
+                            overlayManager.setClickState(false)
+                        }
                     }
-                    ClickAction.RIGHT_CLICK -> {
-                        // Right click acts as system BACK button on Android TV
-                        service?.performSystemAction(AccessibilityService.GLOBAL_ACTION_BACK)
-                    }
-                    ClickAction.DOUBLE_CLICK -> {
-                        service?.injectDoubleTap(cx, cy)
-                    }
-                    ClickAction.PRESS_HOLD -> {
-                        overlayManager.setClickState(true)
-                    }
-                    ClickAction.RELEASE -> {
-                        overlayManager.setClickState(false)
+                } else {
+                    // Fallback to OK/ENTER key event when accessibility service is not yet enabled
+                    if (packet.action == ClickAction.LEFT_CLICK) {
+                        injectKeyFallback(KeyEvent.KEYCODE_DPAD_CENTER)
+                    } else if (packet.action == ClickAction.RIGHT_CLICK) {
+                        injectKeyFallback(KeyEvent.KEYCODE_BACK)
                     }
                 }
             }
             is ScrollPacket -> {
-                // Scroll gesture relative to cursor center
-                val scrollFactor = 50f
-                service?.injectScroll(cx, cy, cx - packet.deltaX * scrollFactor, cy - packet.deltaY * scrollFactor)
+                if (service != null) {
+                    val scrollFactor = 50f
+                    service.injectScroll(cx, cy, cx - packet.deltaX * scrollFactor, cy - packet.deltaY * scrollFactor)
+                } else {
+                    val dy = packet.deltaY
+                    if (dy > 0) injectKeyFallback(KeyEvent.KEYCODE_DPAD_DOWN)
+                    else if (dy < 0) injectKeyFallback(KeyEvent.KEYCODE_DPAD_UP)
+                }
             }
             is KeyEventPacket -> {
-                when (packet.keyCode) {
-                    KeyEvent.KEYCODE_BACK -> service?.performSystemAction(AccessibilityService.GLOBAL_ACTION_BACK)
-                    KeyEvent.KEYCODE_HOME -> service?.performSystemAction(AccessibilityService.GLOBAL_ACTION_HOME)
-                    KeyEvent.KEYCODE_APP_SWITCH -> service?.performSystemAction(AccessibilityService.GLOBAL_ACTION_RECENTS)
-                    else -> {
-                        // Generic D-pad / key code injection via accessibility tap or global action
+                if (service != null) {
+                    when (packet.keyCode) {
+                        KeyEvent.KEYCODE_BACK -> service.performSystemAction(AccessibilityService.GLOBAL_ACTION_BACK)
+                        KeyEvent.KEYCODE_HOME -> service.performSystemAction(AccessibilityService.GLOBAL_ACTION_HOME)
+                        KeyEvent.KEYCODE_APP_SWITCH -> service.performSystemAction(AccessibilityService.GLOBAL_ACTION_RECENTS)
+                        else -> injectKeyFallback(packet.keyCode)
                     }
+                } else {
+                    injectKeyFallback(packet.keyCode)
                 }
             }
             is TextInputPacket -> {
-                service?.injectText(packet.text)
+                if (service != null) {
+                    service.injectText(packet.text)
+                } else {
+                    injectTextFallback(packet.text)
+                }
             }
             is AppLaunchPacket -> {
                 val launchIntent = packageManager.getLaunchIntentForPackage(packet.packageName)
@@ -256,6 +275,27 @@ class ReceiverServerService : Service() {
                     val response = PacketCodec.encodeJson(AppListResponsePacket(installedApps))
                     writer.println(response)
                 }
+            }
+        }
+    }
+
+    private fun injectKeyFallback(keyCode: Int) {
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                Runtime.getRuntime().exec("input keyevent $keyCode")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun injectTextFallback(text: String) {
+        serviceScope.launch(Dispatchers.IO) {
+            try {
+                val escapedText = text.replace(" ", "%s")
+                Runtime.getRuntime().exec("input text $escapedText")
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
